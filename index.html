@@ -7,7 +7,7 @@
 <meta name="description" content="HKTCG 為玩家提供一站式的卡牌寄存生息服務和寄賣服務，旨在把香港打造成為亞洲卡牌遊戲的樞紐。">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body id="top">
 
 <div id="progress"></div>
 
@@ -22,48 +22,25 @@
   <a class="nav-cta" href="https://www.hktcg.com/en" target="_blank" rel="noopener">Shop Online</a>
 </nav>
 
-<!-- ============ scroll-film hero ============ -->
+<!-- ============ one-shot moving camera hero ============ -->
 <div id="hero">
-  <div id="stage">
+  <div id="stage" aria-label="HKTCG one-shot moving camera scroll hero">
     <canvas id="film"></canvas>
     <div class="scrim"></div>
 
-    <div class="ov" id="ov1">
-      <span class="k">Play · Collect · Connect</span>
-      <h1>Walk into HKTCG</h1>
-      <p>Scroll 向前行 — scroll to walk into the shop.</p>
-    </div>
-    <div class="ov" id="ov2">
-      <span class="k">HK · T · CG</span>
-      <h2>The T is for Trading</h2>
-      <p>T 字就係 Trading — 卡牌交易嘅 T。</p>
-    </div>
-    <div class="ov" id="ov3">
-      <span class="k">開門喇 · Doors opening</span>
-      <h2>Step inside</h2>
-      <p>兩萬六千呎旗艦店 — a 26,000 sq ft flagship.</p>
-    </div>
-    <div class="ov" id="ov4">
-      <span class="k">收藏博物館 · The Museum</span>
-      <h2>The collectible museum</h2>
-      <p>等值八千萬港幣嘅珍藏 — HK$80M in collectibles.</p>
-    </div>
-    <div class="ov" id="ov5">
-      <span class="k">向左向右 · Pan the hall</span>
-      <h2>A hall built for collections</h2>
-      <div class="chips">
-        <span class="chip">ONE PIECE</span><span class="chip">POKÉMON</span>
-        <span class="chip">YU-GI-OH!</span><span class="chip">GUNDAM</span>
-        <span class="chip">DIGIMON</span><span class="chip">HOLOLIVE</span>
+    <div class="hero-site-copy" aria-labelledby="hero-title">
+      <div class="site-beat active" data-beat>
+        <span>HKTCG continuous walkthrough</span>
+        <h1 id="hero-title">Scroll to walk through HKTCG.</h1>
+        <p>One continuous camera move through the flagship.</p>
       </div>
     </div>
-    <div class="ov" id="ov6">
-      <span class="k">呢度就係 HKTCG</span>
-      <h2>This is HKTCG</h2>
-      <a class="cta" href="#explore">Explore More · 入去睇睇</a>
+
+    <div class="story-progress" aria-hidden="true">
+      <span class="story-segment"></span>
     </div>
 
-    <div id="hint">SCROLL ↓</div>
+    <div id="hint">SCROLL TO TAKE THE TOUR ↓</div>
   </div>
 </div>
 
@@ -151,12 +128,16 @@
 
   <footer>
     <a class="brand" href="#top">HK<span class="t-box">T</span>CG</a>
-    <p>Prototype — scroll-film hero demo built from the venue walkthrough footage.<br>
+    <p>Prototype — one-shot scroll hero demo inspired by the reference reel.<br>
     Not affiliated with the live store checkout; all product links go to hktcg.com.</p>
   </footer>
 </main>
 
-<script>window.__FRAME_COUNT = 175;</script>
+<script>
+window.__FRAME_COUNT = 181;
+window.__FRAME_PREFIX = "assets/walk/walk-";
+window.__FRAME_PAD = 4;
+</script>
 <script src="main.js"></script>
 </body>
 </html>
