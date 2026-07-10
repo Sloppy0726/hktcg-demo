@@ -266,7 +266,7 @@ function CueTitle({ cue, language, heading = "h2" }: { cue: CinemaCue; language:
 function CinematicWalkthrough({ language }: { language: Language }) {
   const [mode, setMode] = useState<ExperienceMode>("pending");
   const [videoSource, setVideoSource] = useState<string>();
-  const [mobilePlaybackSource, setMobilePlaybackSource] = useState<{
+  const [stagedPlaybackSource, setStagedPlaybackSource] = useState<{
     source: string;
     url: string;
   }>();
@@ -280,7 +280,7 @@ function CinematicWalkthrough({ language }: { language: Language }) {
   const activeCueRef = useRef(0);
   const metadataReadyRef = useRef(false);
   const latestTargetRef = useRef(0);
-  const mobileObjectUrlRef = useRef<string>();
+  const objectUrlRef = useRef<string>();
   const primedRef = useRef(false);
   const selectedSourceRef = useRef<string>();
   const l = labels[language];
@@ -356,7 +356,7 @@ function CinematicWalkthrough({ language }: { language: Language }) {
 
   useEffect(() => {
     metadataReadyRef.current = false;
-    if (!videoSource?.includes("walkthrough-mobile")) return;
+    if (!videoSource) return;
 
     const controller = new AbortController();
 
@@ -373,9 +373,9 @@ function CinematicWalkthrough({ language }: { language: Language }) {
       .then((blob) => {
         if (controller.signal.aborted) return;
         const objectUrl = URL.createObjectURL(blob);
-        if (mobileObjectUrlRef.current) URL.revokeObjectURL(mobileObjectUrlRef.current);
-        mobileObjectUrlRef.current = objectUrl;
-        setMobilePlaybackSource({ source: videoSource, url: objectUrl });
+        if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = objectUrl;
+        setStagedPlaybackSource({ source: videoSource, url: objectUrl });
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
@@ -390,7 +390,7 @@ function CinematicWalkthrough({ language }: { language: Language }) {
 
   useEffect(
     () => () => {
-      if (mobileObjectUrlRef.current) URL.revokeObjectURL(mobileObjectUrlRef.current);
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     },
     [],
   );
@@ -477,11 +477,10 @@ function CinematicWalkthrough({ language }: { language: Language }) {
     };
   }, [mode]);
 
-  const playbackSource = videoSource?.includes("walkthrough-mobile")
-    ? mobilePlaybackSource?.source === videoSource
-      ? mobilePlaybackSource.url
-      : undefined
-    : videoSource;
+  const playbackSource =
+    videoSource && stagedPlaybackSource?.source === videoSource
+      ? stagedPlaybackSource.url
+      : undefined;
 
   const handleMetadata = () => {
     primedRef.current = false;
