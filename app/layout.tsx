@@ -48,11 +48,20 @@ export const metadata: Metadata = {
     siteName: "HKTCG",
     title: "HKTCG — Play. Collect. Connect.",
     description: "Enter Hong Kong’s card destination at iSQUARE, Tsim Sha Tsui.",
+    images: [
+      {
+        url: "/og.png",
+        width: 1731,
+        height: 909,
+        alt: "HKTCG — The T stands for Trading.",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "HKTCG — Play. Collect. Connect.",
     description: "Enter Hong Kong’s card destination at iSQUARE, Tsim Sha Tsui.",
+    images: ["/og.png"],
   },
 };
 

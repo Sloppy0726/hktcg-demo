@@ -2,7 +2,7 @@
 
 ## Style Prompt
 
-Build an architectural retail walkthrough that begins at an obsidian threshold and opens into HKTCG's bright white store through a decisive red portal. The real store is the visual language: illuminated card walls, people crossing the entrance, white display plinths, black slatted gates, and the suspended translucent plaque T. Typography behaves like bold Hong Kong wayfinding and trading-card packaging. The experience is cinematic and precise, but human activity keeps it welcoming rather than luxury-cold.
+Build a full-screen architectural retail film that carries the visitor through HKTCG as one controlled camera journey. The real store is the visual language: illuminated card walls, people crossing the entrance, white display plinths, mirrored ceilings, and the suspended translucent plaque T. Typography behaves like bold Hong Kong wayfinding and trading-card packaging. The experience is cinematic and precise, but human activity keeps it welcoming rather than luxury-cold.
 
 ## Colors
 
@@ -27,22 +27,18 @@ Use a committed strategy: red owns decisive transitions and major moments, while
 
 ## Layout
 
-- Opening desktop composition: 43/57 asymmetric split. Obsidian copy chamber on the left; bright real store media on the right; a Signal Red architectural gate marks the threshold.
+- Opening composition: edge-to-edge store film with independent semantic HTML copy placed directly in the scene. Use localized edge and lower-third scrims only where copy needs contrast; never reserve a permanent split panel.
 - Use a 4px spacing base with `8, 12, 16, 24, 32, 48, 64, 96` increments and fluid section spacing through `clamp()`.
-- The cinematic walkthrough uses a sticky `100svh` stage with semantic scroll chapters above it. Native scrolling only; no wheel hijacking or hard scroll snap.
+- The cinematic walkthrough uses a sticky `100svh` stage inside a `600–700svh` native-scroll section. Scroll position maps to authored film time through narrative keyframes so each chapter receives useful reading time. No wheel hijacking or hard scroll snap.
 - Keep an always-available route out: “Skip walkthrough.” Primary action: “Plan your visit.”
 - After the walkthrough, return to normal document flow for Visit, Play, Trade/Grade/Consign, Events, specialist stores, Shop, hours, and directions.
 - Avoid repeated equal cards. Prefer full-width chapters, paired media/copy compositions, lists, rails, and architectural rules.
 
 ## Signature Components
 
-### Threshold Hero
+### Cinematic Threshold
 
-An Obsidian copy chamber and bright entrance photograph are joined by a Signal Red gate. The entrance image settles from a slightly tighter crop as the gate reveals the store. The headline is “Enter Hong Kong's card destination.”
-
-### Walkthrough Rail
-
-A compact, clickable chapter rail: Entrance, The T, Collect, Play, Auction, Community. It communicates progress without behaving like numbered decorative scaffolding.
+The store entrance fills the viewport. A restrained edge scrim supports the line “Enter Hong Kong's card destination” while the authored camera settles forward through the real red portal. A slim progress line and chapter count are the only persistent walkthrough controls.
 
 ### Red T Reveal
 
@@ -54,33 +50,35 @@ Rectangular, direct buttons with minimal rounding (`0–4px`). Primary actions u
 
 ## Motion
 
-- One orchestrated opening, not uniform fade-and-rise on every section.
-- Walkthrough media uses short independently playing plates with matched occlusion cuts and `400–650ms` crossfades; scroll changes chapters, not video time.
-- Continuous progress writes to CSS custom properties inside one `requestAnimationFrame`; React state changes only when the active chapter changes.
+- One custom-produced 19-second film, not a raw handheld clip. The film combines sharp HEIC anchors, the calmest native-60fps spans at 45–65% speed, soft continuity dissolves, and one Signal Red occlusion.
+- Scroll position controls authored film time. Narrative keyframes deliberately give Entrance, Trading, Collect, Services, and Community different shares of the film while equalizing their reading distance.
+- The desktop and mobile films are separate compositions: 16:9 at `1440×810` and 9:16 at `720×1280`. Both are H.264, muted, BT.709, fast-start, and GOP 6 for responsive seeking.
+- Continuous progress writes video time, progress, and cue CSS custom properties inside one `requestAnimationFrame`; React state changes only when the active chapter changes.
 - Preferred easing: ease-out-expo `cubic-bezier(0.16, 1, 0.3, 1)` and ease-out-quint `cubic-bezier(0.22, 1, 0.36, 1)`.
 - Interaction feedback: `100–250ms`; hero/scene entrances: `500–800ms`.
 - No autoplay audio. Owner narration, if exposed, is user-initiated and captioned.
 
 ## Responsive Behavior
 
-- Mobile is a vertical portal, not a scaled desktop split: portrait media first, horizontal red threshold, copy chamber, and a shorter chapter rail.
-- Use dedicated portrait crops and clips. Do not center-crop desktop media when it removes the plaque sculpture or card walls.
-- Shorten pinned chapter lengths and reduce the number of simultaneous layers on touch devices.
+- Mobile is a dedicated portrait camera path, not a crop of the desktop film. Copy sits in the lower third while the store, plaque T, card walls, counter, and community tables retain their own intentional framing.
+- Use the dedicated portrait master and portrait posters. Never request both desktop and mobile films.
+- Shorten the pinned scroll distance to about `600svh` and reduce persistent controls on touch devices.
 - All controls are at least 44×44px and do not depend on hover.
 - Respect safe-area insets and mobile browser chrome with `svh`/`dvh` units.
-- Slow connections and data-saver use poster crossfades instead of motion clips.
+- Reduced motion, slow connections, and data-saver use full-height semantic poster chapters in normal document flow instead of a frozen sticky film.
 
 ## Accessibility
 
 - WCAG 2.2 AA contrast and focus visibility.
 - All essential chapter copy is semantic HTML; visual-stage media is decorative to assistive technology.
 - Preserve keyboard order, browser zoom, native scrolling, and a visible skip link.
-- `prefers-reduced-motion` removes sticky camera travel, parallax, scale, and plaque alignment while preserving content and chapter order.
+- `prefers-reduced-motion` removes the sticky film, camera travel, parallax, scale, and plaque alignment while preserving content and chapter order as full-height poster scenes.
 - Captions and a text transcript are required for any owner video.
 
 ## What NOT to Do
 
-- No long raw video scrubbed by scroll position.
+- No raw handheld video scrubbed by scroll position. Only the short, authored cinematic master with dense seek keyframes may be scroll-controlled.
+- No split-screen chapter rail, permanent opaque copy panel, or card-based walkthrough UI.
 - No free-roam 3D store as the primary experience.
 - No neon gamer/cyberpunk styling, franchise fan art, or simulated card-game UI.
 - No beige/cream body background, editorial serif styling, gradient text, glass cards, or decorative grid overlays.
