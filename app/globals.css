@@ -33,6 +33,7 @@ body {
   min-width: 20rem;
   margin: 0;
   overflow-x: hidden;
+  overflow-x: clip;
   background: var(--architectural-white);
   font-family: var(--font-body), "Chiron Hei HK", "PingFang HK", "Microsoft JhengHei", sans-serif;
 }
@@ -218,16 +219,19 @@ button {
 
 .cinema {
   position: relative;
+  min-height: 100vh;
   min-height: 100svh;
   background: var(--obsidian);
   color: var(--architectural-white);
 }
 
 .cinema[data-mode="pending"] {
+  height: 100vh;
   height: 100svh;
 }
 
 .cinema[data-mode="cinema"] {
+  height: 700vh;
   height: 700svh;
 }
 
@@ -235,6 +239,7 @@ button {
   position: sticky;
   top: 0;
   z-index: var(--z-stage);
+  height: 100vh;
   height: 100svh;
   overflow: hidden;
   isolation: isolate;
@@ -618,6 +623,7 @@ button {
   position: relative;
   isolation: isolate;
   display: flex;
+  min-height: 100vh;
   min-height: 100svh;
   align-items: flex-end;
   overflow: hidden;
@@ -1082,6 +1088,7 @@ button {
   }
 
   .cinema[data-mode="cinema"] {
+    height: 600vh;
     height: 600svh;
   }
 
@@ -1164,11 +1171,18 @@ button {
     display: none;
   }
 
+  .cinema[data-film-ready="false"] .cinema-status > span:last-child {
+    display: block;
+    grid-column: 1 / -1;
+    color: var(--architectural-white);
+  }
+
   .cinema-skip {
     display: none;
   }
 
   .static-scene {
+    min-height: 100vh;
     min-height: 100svh;
     align-items: flex-end;
     padding: calc(var(--header-height) + 3rem) max(1.15rem, env(safe-area-inset-right)) max(3rem, env(safe-area-inset-bottom)) max(1.15rem, env(safe-area-inset-left));

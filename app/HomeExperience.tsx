@@ -266,7 +266,11 @@ function CueTitle({ cue, language, heading = "h2" }: { cue: CinemaCue; language:
 function CinematicWalkthrough({ language }: { language: Language }) {
   const [mode, setMode] = useState<ExperienceMode>("pending");
   const [videoSource, setVideoSource] = useState<string>();
-  const [readySource, setReadySource] = useState<string>();
+  const [mobilePlaybackSource, setMobilePlaybackSource] = useState<{
+    source: string;
+    url: string;
+  }>();
+  const [readyPlaybackSource, setReadyPlaybackSource] = useState<string>();
   const [activeCue, setActiveCue] = useState(0);
   const sectionRef = useRef<HTMLElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -275,6 +279,10 @@ function CinematicWalkthrough({ language }: { language: Language }) {
   const renderFrameRef = useRef<(() => void) | null>(null);
   const activeCueRef = useRef(0);
   const metadataReadyRef = useRef(false);
+  const latestTargetRef = useRef(0);
+  const mobileObjectUrlRef = useRef<string>();
+  const primedRef = useRef(false);
+  const selectedSourceRef = useRef<string>();
   const l = labels[language];
 
   useEffect(() => {
@@ -298,30 +306,94 @@ function CinematicWalkthrough({ language }: { language: Language }) {
         connection?.effectiveType === "2g";
 
       if (reducedMotion.matches || constrained) {
+        if (selectedSourceRef.current !== undefined) {
+          selectedSourceRef.current = undefined;
+          metadataReadyRef.current = false;
+          primedRef.current = false;
+          setReadyPlaybackSource(undefined);
+        }
         setMode("static");
         setVideoSource(undefined);
         return;
       }
 
+      const nextSource = mobile.matches
+        ? "/media/cinematic/walkthrough-mobile.mp4"
+        : "/media/cinematic/walkthrough-desktop.mp4";
+
+      if (selectedSourceRef.current !== nextSource) {
+        selectedSourceRef.current = nextSource;
+        metadataReadyRef.current = false;
+        primedRef.current = false;
+        setReadyPlaybackSource(undefined);
+      }
+
       setMode("cinema");
-      setVideoSource(
-        mobile.matches
-          ? "/media/cinematic/walkthrough-mobile.mp4"
-          : "/media/cinematic/walkthrough-desktop.mp4",
-      );
+      setVideoSource(nextSource);
+    };
+
+    const listen = (query: MediaQueryList) => {
+      if (typeof query.addEventListener === "function") query.addEventListener("change", sync);
+      else query.addListener(sync);
+    };
+
+    const unlisten = (query: MediaQueryList) => {
+      if (typeof query.removeEventListener === "function") query.removeEventListener("change", sync);
+      else query.removeListener(sync);
     };
 
     sync();
-    reducedMotion.addEventListener("change", sync);
-    mobile.addEventListener("change", sync);
+    listen(reducedMotion);
+    listen(mobile);
     connection?.addEventListener?.("change", sync);
 
     return () => {
-      reducedMotion.removeEventListener("change", sync);
-      mobile.removeEventListener("change", sync);
+      unlisten(reducedMotion);
+      unlisten(mobile);
       connection?.removeEventListener?.("change", sync);
     };
   }, []);
+
+  useEffect(() => {
+    metadataReadyRef.current = false;
+    if (!videoSource?.includes("walkthrough-mobile")) return;
+
+    const controller = new AbortController();
+
+    // Sites serves the private MP4 as one response, so stage it locally before Safari seeks.
+    fetch(videoSource, {
+      cache: "force-cache",
+      credentials: "same-origin",
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Unable to load mobile walkthrough: ${response.status}`);
+        return response.blob();
+      })
+      .then((blob) => {
+        if (controller.signal.aborted) return;
+        const objectUrl = URL.createObjectURL(blob);
+        if (mobileObjectUrlRef.current) URL.revokeObjectURL(mobileObjectUrlRef.current);
+        mobileObjectUrlRef.current = objectUrl;
+        setMobilePlaybackSource({ source: videoSource, url: objectUrl });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setVideoSource(undefined);
+        setMode("static");
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [videoSource]);
+
+  useEffect(
+    () => () => {
+      if (mobileObjectUrlRef.current) URL.revokeObjectURL(mobileObjectUrlRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (mode !== "cinema") return;
@@ -365,7 +437,14 @@ function CinematicWalkthrough({ language }: { language: Language }) {
       const video = videoRef.current;
       if (video && metadataReadyRef.current && Number.isFinite(video.duration)) {
         const target = Math.min(video.duration - 0.025, timeForProgress(progress, video.duration));
-        if (Math.abs(video.currentTime - target) >= 1 / 30) video.currentTime = target;
+        latestTargetRef.current = target;
+        if (!video.seeking && Math.abs(video.currentTime - target) >= 1 / 30) {
+          try {
+            video.currentTime = target;
+          } catch {
+            // Safari can reject a seek until its first frame is decoded.
+          }
+        }
       }
     };
 
@@ -398,20 +477,79 @@ function CinematicWalkthrough({ language }: { language: Language }) {
     };
   }, [mode]);
 
+  const playbackSource = videoSource?.includes("walkthrough-mobile")
+    ? mobilePlaybackSource?.source === videoSource
+      ? mobilePlaybackSource.url
+      : undefined
+    : videoSource;
+
   const handleMetadata = () => {
+    primedRef.current = false;
     metadataReadyRef.current = true;
-    setReadySource(videoSource);
     renderFrameRef.current?.();
+  };
+
+  const handlePlayable = () => {
+    const video = videoRef.current;
+    if (!video || !playbackSource) return;
+    renderFrameRef.current?.();
+    if (!video.seeking) {
+      setReadyPlaybackSource(playbackSource);
+    }
+  };
+
+  const handleSeeked = () => {
+    const video = videoRef.current;
+    if (!video || !metadataReadyRef.current) return;
+
+    const target = latestTargetRef.current;
+    if (Math.abs(video.currentTime - target) >= 1 / 30) {
+      try {
+        video.currentTime = target;
+        return;
+      } catch {
+        // The decoded frame below is still a valid fallback.
+      }
+    }
+
+    video.pause();
+    if (playbackSource) setReadyPlaybackSource(playbackSource);
+  };
+
+  const handlePlaying = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    primedRef.current = true;
+    video.pause();
+    renderFrameRef.current?.();
+  };
+
+  const primeVideo = () => {
+    const video = videoRef.current;
+    if (!video || !metadataReadyRef.current || primedRef.current || video.seeking) return;
+
+    const playback = video.play();
+    playback
+      ?.then(() => {
+        primedRef.current = true;
+        video.pause();
+        renderFrameRef.current?.();
+      })
+      .catch(() => {
+        // The complete mobile Blob remains seekable even when autoplay is blocked.
+      });
   };
 
   const handleVideoError = () => {
     metadataReadyRef.current = false;
-    setReadySource(undefined);
+    primedRef.current = false;
+    setReadyPlaybackSource(undefined);
     setVideoSource(undefined);
     setMode("static");
   };
 
-  const videoReady = Boolean(videoSource && readySource === videoSource);
+  const videoReady = Boolean(playbackSource && readyPlaybackSource === playbackSource);
+  const activePoster = cinemaCues[activeCue];
 
   return (
     <section
@@ -420,26 +558,33 @@ function CinematicWalkthrough({ language }: { language: Language }) {
       className="cinema"
       data-mode={mode}
       data-active={activeCue}
+      data-film-ready={videoReady}
       aria-label={l.walkthrough}
+      onPointerDown={primeVideo}
     >
       <div className="cinema-stage">
         <picture className="cinema-poster">
-          <source media="(max-width: 767px)" srcSet={cinemaCues[0].posterMobile} />
-          <img src={cinemaCues[0].posterDesktop} alt="" width={1440} height={810} />
+          <source media="(max-width: 767px)" srcSet={activePoster.posterMobile} />
+          <img src={activePoster.posterDesktop} alt="" width={1440} height={810} />
         </picture>
-        {videoSource ? (
+        {playbackSource ? (
           <video
             ref={videoRef}
-            key={videoSource}
+            key={playbackSource}
             className={videoReady ? "cinema-film is-ready" : "cinema-film"}
-            src={videoSource}
+            src={playbackSource}
             muted
             playsInline
+            autoPlay
             preload="auto"
             disablePictureInPicture
             aria-hidden="true"
             tabIndex={-1}
             onLoadedMetadata={handleMetadata}
+            onLoadedData={handlePlayable}
+            onCanPlay={handlePlayable}
+            onSeeked={handleSeeked}
+            onPlaying={handlePlaying}
             onError={handleVideoError}
           />
         ) : null}
